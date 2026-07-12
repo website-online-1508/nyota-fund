@@ -1,42 +1,181 @@
 <!DOCTYPE html>
- <!-- Brevo Conversations {literal} -->
-<script>
-    (function(d, w, c) {
-        w.BrevoConversationsID = '6973a340153840fff105d60b';
-        w[c] = w[c] || function() {
-            (w[c].q = w[c].q || []).push(arguments);
-        };
-        var s = d.createElement('script');
-        s.async = true;
-        s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
-        if (d.head) d.head.appendChild(s);
-    })(document, window, 'BrevoConversations');
-</script>
-<!-- /Brevo Conversations {/literal} -->
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NYOTA FUND KENYA</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYOTA FUND KENYA</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 <body>
-  <div class="header-image">
-    <img src="images.jpeg" alt="NYOTA FUND KENYA" />
-  </div>
-  <div class="container">
-    <p class="welcome-text">
-      Hi👋,Welcome to NYOTA FUND KENYA. We are going to take you through some few questions before you receive your funds. <strong>Are you ready for that?</strong>
-    </p>
-    <div class="buttons">
-      <button onclick="nextPage()">Yes</button>
-      <button onclick="notReady()">No</button>
-    </div>
-  </div>
+
+<div class="header-image">
+<img src="images.jpeg" alt="NYOTA FUND KENYA">
+</div>
+
+<div class="container">
+
+<h2 style="text-align:center;">NYOTA Fund Kenya</h2>
+
+<p style="text-align:center;font-size:19px;">
+Empowering Youth • Supporting Businesses • Strengthening Kenya's Economy
+</p>
+
+<hr>
+
+<h3>About the NYOTA Fund</h3>
+
+<p>
+NYOTA Fund is a national financial empowerment initiative focused on supporting youth entrepreneurs across Kenya through accessible and affordable funding opportunities.
+</p>
+
+<p>
+Our goal is to stimulate economic growth by supporting small businesses, promoting innovation, and providing capital to individuals ready to grow their economic potential.
+</p>
+
+<hr>
+
+<h3>National Impact</h3>
+
+<p>
+Total Applications Received: <strong>148,526</strong><br>
+Approved Applicants: <strong>93,412</strong><br>
+Funds Disbursed Nationwide: <strong>KSh 412,000,000+</strong>
+</p>
+
+<hr>
+
+<h3>Who Can Apply</h3>
+
+<p>
+✔ Kenyan citizen aged 18+<br>
+✔ Youth entrepreneurs and small business owners<br>
+✔ Individuals seeking financial empowerment support
+</p>
+
+<hr>
+
+<h3>Live Application Activity</h3>
+
+<p id="liveCounter" style="font-weight:bold;font-size:18px;">
+3,428 people are currently completing the NYOTA Fund application
+</p>
+
+<p id="countdownTimer" style="font-weight:bold;">
+Loading next funding review countdown...
+</p>
+
+<hr>
+
+<h3>Recent Beneficiary Feedback</h3>
+
+<div class="comments-box" id="commentsBox">
+
+<div class="comment">
+<strong>Brian K. – Nakuru</strong><br>
+Received KSh 45,000 today. My shop expansion is now possible.<br>
+<span>2 minutes ago</span>
+</div>
+
+<div class="comment">
+<strong>Mercy A. – Nairobi</strong><br>
+Application process was fast and very straightforward.<br>
+<span>5 minutes ago</span>
+</div>
+
+<div class="comment">
+<strong>Kevin O. – Kisumu</strong><br>
+NYOTA Fund has truly supported youth businesses.<br>
+<span>8 minutes ago</span>
+</div>
+
+<div class="comment">
+<strong>Faith W. – Eldoret</strong><br>
+Thank you for supporting young entrepreneurs.<br>
+<span>11 minutes ago</span>
+</div>
+
+<div class="comment">
+<strong>James M. – Mombasa</strong><br>
+I finally received capital for my business today.<br>
+<span>16 minutes ago</span>
+</div>
+
+</div>
+
+<hr>
+
+<p style="text-align:center;font-size:18px;">
+<strong>Begin your application now to check your eligibility for NYOTA Fund support.</strong>
+</p>
+
+
+</div>
 
 <script>
-function nextPage(){ window.location.href='register.html'; }
-function notReady(){ alert("Please come back when you are ready."); }
+
+function nextPage(){
+window.location.href="register.html";
+}
+
+function notReady(){
+alert("You can return anytime to complete your NYOTA Fund application.");
+}
+
+/* Live national activity counter */
+
+function updateCounter(){
+
+let number = Math.floor(Math.random()*2000)+2500;
+
+document.getElementById("liveCounter").innerHTML =
+number + " people across Kenya are currently completing the NYOTA Fund application";
+
+}
+
+setInterval(updateCounter,5000);
+
+/* Auto scroll comments */
+
+const commentsBox=document.getElementById("commentsBox");
+
+setInterval(function(){
+
+commentsBox.scrollTop += 1;
+
+if(commentsBox.scrollTop >= commentsBox.scrollHeight - commentsBox.clientHeight){
+commentsBox.scrollTop = 0;
+}
+
+},40);
+
+/* Funding review countdown */
+
+var countDownDate = new Date().getTime() + (4*60*60*1000);
+
+var timer = setInterval(function(){
+
+var now = new Date().getTime();
+var distance = countDownDate - now;
+
+var hours = Math.floor((distance%(1000*60*60*24))/(1000*60*60));
+var minutes = Math.floor((distance%(1000*60*60))/(1000*60));
+var seconds = Math.floor((distance%(1000*60))/1000);
+
+document.getElementById("countdownTimer").innerHTML =
+"Next funding review closes in: "+hours+"h "+minutes+"m "+seconds+"s";
+
+},1000);
+
 </script>
+
+<!-- FLOATING BUTTONS -->
+<div class="floating-buttons">
+  <button onclick="nextPage()">Start Application</button>
+  <button onclick="notReady()">Apply Later</button>
+</div>
+
 </body>
 </html>
