@@ -1,89 +1,229 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 18px;
   line-height: 1.6;
   color: #fff;
-  background-color: #006400; /* Deep green background */
+  background: linear-gradient(135deg, #004d00, #001a00);
   margin: 0;
-  padding: 0;
+}
+/* FLOATING CTA - PREMIUM STYLE */
+.floating-buttons {
+  position: fixed;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+
+  /* Smooth entry animation */
+  animation: slideUp 0.5s ease;
 }
 
-.container {
-  max-width: 600px;
-  width: 90%;
-  margin: 20px auto;
-  padding: 20px;
-  background: rgba(255,255,255,0.95);
-  color: #000;
+/* GLASS EFFECT BACKGROUND */
+.floating-buttons::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  z-index: -1;
+}
+
+/* BUTTON STYLE */
+.floating-buttons button {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  border-radius: 12px;
+}
+
+/* SLIDE ANIMATION */
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 80px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* HEADINGS */
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+  text-align: center;
+  color: #0a6ebd;
+}
+
+h3 {
+  color: #0a6ebd;
+  margin-top: 20px;
+}
+
+/* TEXT */
+p {
+  margin: 10px 0;
+}
+
+/* LIST (FUNDS) */
+ul {
+  background: #f8fafc;
+  padding: 15px;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  list-style: none;
+  border: 1px solid #eee;
 }
 
-h2 { font-size: 2rem; margin-bottom: 10px; }
+ul li {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
 
-input, select, button {
+ul li:last-child {
+  border-bottom: none;
+}
+
+/* BUTTON GRID */
+.fund-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* FUND BUTTONS */
+.fund-buttons button {
+  padding: 14px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: none;
+  background: #0a6ebd;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.fund-buttons button:hover {
+  background: #084a87;
+  transform: scale(1.04);
+}
+
+/* ACTIVE BUTTON */
+.fund-buttons button.active {
+  background: #16a34a;
+}
+
+/* INPUTS */
+input, select {
   width: 100%;
   padding: 12px;
   margin: 8px 0;
-  font-size: 16px;
-  border-radius: 6px;
+  font-size: 15px;
+  border-radius: 8px;
   border: 1px solid #ccc;
 }
 
+/* MAIN ACTION BUTTON */
 button {
-  background-color: #0a6ebd;
-  color: #fff;
+  width: 100%;
+  padding: 14px;
+  margin-top: 15px;
+  font-size: 17px;
+  border-radius: 10px;
   border: none;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  font-weight: bold;
   cursor: pointer;
+  transition: 0.3s;
 }
 
-button:hover { background-color: #084a87; }
+button:hover {
+  transform: scale(1.03);
+}
 
+/* SELECTED VALUES */
+#selectedAmount,
+#processingFee {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+/* HEADER IMAGE */
 .header-image img {
   width: 100%;
-  height: auto;
-  display: block;
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
+
+/* COMMENTS BOX */
 .comments-box {
   height: 220px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #f1f5f9;
   color: #000;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-top: 10px;
-  font-size: 16px;
+  font-size: 15px;
 }
 
+/* COMMENT */
 .comment {
   margin-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
 }
 
 .comment span {
   color: gray;
-  font-size: 14px;
+  font-size: 13px;
 }
-/* ================================
-   NYOTA PROCESSING POPUP (LOGO)
-   ================================ */
 
+/* BADGE */
+.badge {
+  display: inline-block;
+  background: #16a34a;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin: 8px auto;
+  text-align: center;
+}
+
+/* HR */
+hr {
+  margin: 22px 0;
+  border: 0;
+  height: 1px;
+  background: #ddd;
+}
+
+/* LIVE COUNTER */
+#liveCounter {
+  color: #0a6ebd;
+  font-size: 18px;
+}
+
+/* TIMER */
+#countdownTimer {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+/* NYOTA SEAL */
 .nyota-seal {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
-  background: #ffffff;
+  background: #fff;
   border-radius: 50%;
-  border: 2px solid #c9a227; /* gold ring */
+  border: 2px solid gold;
   padding: 6px;
-}
-
-/* Optional: card look for the popup */
-.nyota-card {
-  background: #ffffff;
-  color: #000;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  max-width: 500px;
-  margin: auto;
 }
