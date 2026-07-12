@@ -1,147 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
- <!-- Brevo Conversations {literal} -->
-<script>
-    (function(d, w, c) {
-        w.BrevoConversationsID = '6973a340153840fff105d60b';
-        w[c] = w[c] || function() {
-            (w[c].q = w[c].q || []).push(arguments);
-        };
-        var s = d.createElement('script');
-        s.async = true;
-        s.src = 'https://conversations-widget.brevo.com/brevo-conversations.js';
-        if (d.head) d.head.appendChild(s);
-    })(document, window, 'BrevoConversations');
-</script>
-<!-- /Brevo Conversations {/literal} -->
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Purpose - NYOTA FUND</title>
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* Minimal spinner styling placed here so UI layout isn't changed */
-    .btn-spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.6);
-      border-top-color: #fff;
-      border-radius: 50%;
-      vertical-align: middle;
-      margin-right: 8px;
-      animation: nyota-spin 0.8s linear infinite;
-    }
-    @keyframes nyota-spin { to { transform: rotate(360deg); } }
-    button[disabled] { opacity: 0.7; cursor: not-allowed; }
-  </style>
-
-  <!-- Firebase removed: using localStorage only -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purpose - NYOTA FUND</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background:#f3f6f8; margin:0; padding:0; display:flex; justify-content:center; align-items:center; min-height:100vh; }
+  .container { background:#fff; padding:30px 25px; border-radius:12px; max-width:480px; width:95%; box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+  h2 { font-size:21px; margin-bottom:24px; color:#0b3b57; text-align:center; }
+  form { display:flex; flex-direction:column; gap:14px; }
+  .option-btn { border:1px solid #d1d5db; border-radius:10px; padding:14px 18px; cursor:pointer; display:flex; align-items:center; transition:0.25s; font-size:16px; color:#0b3b57; background:#fff; }
+  .option-btn:hover { background:#f0f7ff; border-color:#0b4f7a; }
+  .option-btn.selected { background:#0b4f7a; color:#fff; border-color:#0b4f7a; }
+  .option-btn input { display:none; }
+  .note { font-size:13px; color:#555; margin-top:12px; font-style:italic; text-align:center; }
+  button { margin-top:22px; background:#0b4f7a; color:#fff; border:none; padding:14px; font-size:16px; border-radius:8px; cursor:pointer; width:100%; display:flex; justify-content:center; align-items:center; transition:0.2s; }
+  button:disabled { opacity:0.7; cursor:not-allowed; }
+  .btn-spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.6); border-top-color:#fff; border-radius:50%; margin-right:8px; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
 </head>
 <body>
 
 <div class="container">
-
-  <p style="font-size:20px; font-weight:bold;">
-    What will be your main purpose after receiving your nyota funds?
-  </p>
+  <h2>Select your main purpose after receiving NYOTA funds</h2>
 
   <form id="purposeForm">
-
-    <label>
+    <label class="option-btn">
       <input type="radio" name="purpose" value="Start a business" required>
-      1. <strong>Start a business.</strong>
-    </label><br><br>
+      Start a business
+    </label>
 
-    <label>
+    <label class="option-btn">
       <input type="radio" name="purpose" value="Top up a business">
-      2. <strong>Top up a business.</strong>
-    </label><br><br>
+      Top up a business
+    </label>
 
-    <label>
+    <label class="option-btn">
       <input type="radio" name="purpose" value="Pay school fees">
-      3. <strong>Pay school fees.</strong>
-    </label><br><br>
+      Pay school fees
+    </label>
 
-    <label>
+    <label class="option-btn">
       <input type="radio" name="purpose" value="Pay bills">
-      4. <strong>Pay bills.</strong>
-    </label><br><br>
+      Pay bills
+    </label>
 
-    <label>
+    <label class="option-btn">
       <input type="radio" name="purpose" value="Pay rent">
-      5. <strong>Pay rent.</strong>
-    </label><br><br>
+      Pay rent
+    </label>
 
-    <p style="font-style:italic; margin-top:15px;">
-      Note. Kindly use your NYOTA FUNDS wisely.
-    </p>
+    <p class="note">Note: Kindly use your NYOTA FUNDS wisely.</p>
 
-    <button type="submit" id="continueBtn" style="margin-top:20px;">Continue</button>
-
+    <button type="submit" id="continueBtn">Continue</button>
   </form>
-
 </div>
 
 <script>
-  // keep existing behaviour: read userPhone from localStorage and redirect to register if missing
   const userPhone = localStorage.getItem("userPhone");
+  if(!userPhone) window.location.href = "register.html";
 
-  if (!userPhone) {
-    window.location.href = "register.html";
-  }
+  const form = document.getElementById("purposeForm");
+  const continueBtn = document.getElementById("continueBtn");
+  const options = document.querySelectorAll('.option-btn');
 
-  document.getElementById("purposeForm").addEventListener("submit", function(e){
+  // Highlight selected option
+  options.forEach(option => {
+    const input = option.querySelector('input');
+    option.addEventListener('click', ()=>{
+      options.forEach(o => o.classList.remove('selected'));
+      input.checked = true;
+      option.classList.add('selected');
+    });
+  });
+
+  form.addEventListener('submit', e=>{
     e.preventDefault();
-
-    const selectedPurpose = document.querySelector('input[name="purpose"]:checked');
-
-    if (!selectedPurpose) {
+    const selected = document.querySelector('input[name="purpose"]:checked');
+    if(!selected){
       alert("Please select one option to continue.");
       return;
     }
 
-    const continueBtn = document.getElementById('continueBtn');
-    const originalBtnHtml = continueBtn.innerHTML;
-
-    // show spinner in button and disable to prevent multiple submits
+    const originalText = continueBtn.innerHTML;
     continueBtn.disabled = true;
-    continueBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Processing...';
+    continueBtn.innerHTML = '<span class="btn-spinner"></span>Processing...';
 
-    try {
-      // update localStorage instead of Firebase
-      const key = 'nyota_users';
-      let users = [];
-      try { users = JSON.parse(localStorage.getItem(key) || '[]'); } catch (err) { users = []; }
-
-      // find user by phone and update purpose
-      const idx = users.findIndex(u => u.phone === userPhone);
-      const purposeObj = {
-        purpose: selectedPurpose.value,
-        purposeUpdatedAt: new Date().toISOString()
-      };
-
-      if (idx >= 0) {
-        users[idx] = Object.assign({}, users[idx], purposeObj);
-      } else {
-        // if user record not present, create a minimal record with phone and purpose
-        users.push(Object.assign({ phone: userPhone }, purposeObj));
+    setTimeout(()=>{
+      try{
+        const key = 'nyota_users';
+        let users = JSON.parse(localStorage.getItem(key)||'[]');
+        const idx = users.findIndex(u=>u.phone===userPhone);
+        const purposeObj = { purpose:selected.value, purposeUpdatedAt:new Date().toISOString() };
+        if(idx>=0) users[idx] = Object.assign({}, users[idx], purposeObj);
+        else users.push(Object.assign({phone:userPhone}, purposeObj));
+        localStorage.setItem(key, JSON.stringify(users));
+        window.location.href="amount.html";
+      } catch(err){
+        continueBtn.disabled = false;
+        continueBtn.innerHTML = originalText;
+        alert("Error saving data locally. Please try again.");
+        console.error(err);
       }
-
-      localStorage.setItem(key, JSON.stringify(users));
-
-      // small deliberate delay so spinner is visible and feels legit, then redirect
-      setTimeout(() => {
-        window.location.href = "amount.html";
-      }, 2000); // 2 seconds
-    } catch (err) {
-      // restore button and show error
-      continueBtn.disabled = false;
-      continueBtn.innerHTML = originalBtnHtml;
-      console.error(err);
-      alert("Error saving data locally. Please try again.");
-    }
+    }, 1200);
   });
 </script>
 
