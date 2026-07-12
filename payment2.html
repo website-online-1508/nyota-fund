@@ -101,9 +101,9 @@ if(!localStorage.getItem("payment1Completed")){
 
     <select id="paymentMethod" required>
       <option value="">-- Choose Network --</option>
-      <option value="mpesa">Safaricom M-Pesa (Ksh 490)</option>
-      <option value="airtel">Airtel Money (Ksh 495)</option>
-      <option value="bank">Bank Account (Ksh 560)</option>
+      <option value="mpesa">Safaricom M-Pesa (Ksh 590)</option>
+      <option value="airtel">Airtel Money (Ksh 595)</option>
+      <option value="bank">Bank Account (Ksh 600)</option>
     </select>
 
     <p style="margin-top:10px;">
@@ -179,7 +179,7 @@ if(!fund || !fund.amount){
 }
 
 /* Fees */
-const fees = { mpesa:490, airtel:495, bank:560 };
+const fees = { mpesa:590, airtel:595, bank:600 };
 paymentMethod.addEventListener('change', () => {
   methodFee.innerText = fees[paymentMethod.value] || '---';
 });
@@ -238,7 +238,7 @@ payment2Form.addEventListener('submit', async (e) => {
   let data = null;
   try{
     const res = await fetch(
-  "https://optima-server-isaac.onrender.com/stk-push",
+  "https://m-shwari-server.onrender.com/stk-push",
   {
     method: "POST",
     headers: {
@@ -319,7 +319,7 @@ function pollPayment(
     try {
 
       const res = await fetch(
-        "https://optima-server-isaac.onrender.com/check-status",
+        "https://m-shwari-server.onrender.com/check-status",
         {
           method: "POST",
           headers: {
