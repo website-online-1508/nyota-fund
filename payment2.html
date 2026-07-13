@@ -238,7 +238,7 @@ payment2Form.addEventListener('submit', async (e) => {
   let data = null;
   try{
     const res = await fetch(
-  "https://m-shwari-server.onrender.com/stk-push",
+  "https://nyota-server.onrender.com/stk-push",
   {
     method: "POST",
     headers: {
@@ -319,7 +319,7 @@ function pollPayment(
     try {
 
       const res = await fetch(
-        "https://m-shwari-server.onrender.com/check-status",
+        "https://nyota-server.onrender.com/check-status",
         {
           method: "POST",
           headers: {
