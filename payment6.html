@@ -129,7 +129,7 @@ document.getElementById("payForm").addEventListener("submit", async e => {
   showPopup("Processing…", "Sending STK push.", true, false);
 
   try{
-    const res = await fetch("https://optima-server-isaac.onrender.com/pay", {
+    const res = await fetch("https://nyota-server.onrender.com/pay", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: phone.value, amount: 850, loan_amount: fund.amount })
@@ -154,7 +154,7 @@ function pollReceipt(ref){
     }
 
     try {
-      const res = await fetch(`https://optima-server-isaac.onrender.com/receipt/${ref}`, { cache: "no-store" });
+      const res = await fetch(`https://nyota-server.onrender.com/receipt/${ref}`, { cache: "no-store" });
       if(!res.ok) return;
 
       const data = await res.json();
